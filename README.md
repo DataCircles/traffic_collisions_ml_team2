@@ -1,2 +1,8 @@
-# traffic_collisions_ml_team2
-Public repository containing Machine Learning Team 2's materials for the Traffic Collisions Project, organized by the Projects Circle
+# Traffic Collision Machine Learning Project
+
+This public repository contains the Machine Learning Team's materials for the Traffic Collisions Project, organized by the Projects Circle.  
+
+### Project Team Members
+- Warren
+- Luna  
+- Nazifataha 
