@@ -11,6 +11,8 @@ This public repository contains the Machine Learning Team's materials for the Tr
 
 
 ### Getting Started
+Install python 3 (warren is currently using 3.7.6).
+
 Run the following code to get a virtual environment created and packages installed.
 ```
 python -m venv stmlenv
