@@ -8,3 +8,4 @@ dependencies:
   - cartopy=0.18
   - pandas
   - percache
+  - ipykernel

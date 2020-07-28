@@ -127,3 +127,11 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+
+# parameter files
+params.py
+*.pickle
+*.bak
+*.dat
+*.dir
