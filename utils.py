@@ -371,3 +371,11 @@ cs[(cs['addrtype']=='Intersection')]['location']
 cs[(cs['addrtype']=='Intersection') & cs['speedlimithi'].isna()]['location']
 
 """
+
+
+"""
+
+f = pd.read_csv('./data/Traffic_Flow_Map_Volumes.csv')
+h0, h1 = np.histogram(f[f['YEAR']==2017]['AAWDT']); h0 = h0/h0.sum()
+h0, h1 = np.histogram(f[f['YEAR']==2018]['AAWDT']); h0 = h0/h0.sum()
+"""
