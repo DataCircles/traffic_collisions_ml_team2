@@ -7,15 +7,8 @@ import geopy.distance as distance
 import params
 import os.path
 
-def open_pickle(file):
-  pfile = file+str('.pickle')
-  if os.path.exists(pfile):
-    with open(pfile, 'rb') as f:
-      return pickle.load(f)
-  df = pd.read_csv(file, parse_dates=['INCDATE', 'INCDTTM'])
-  with open(pfile, 'wb') as f:
-    pickle.dump(df, f)      
-
+from utils import * 
+gmaps = googlemaps.Client(key=params.gmapskey)
 """The keys in manual map are the top 100 keys for which X,Y is missing for locations. I was investigating locations on the map that did not have X,Y values. I wrote out a few, but realized that most of them were probably removed intentionally."""
 manual_map = {
   'BATTERY ST TUNNEL NB BETWEEN ALASKAN WY VI NB AND AURORA AVE N':                 (np.nan, np.nan),
@@ -267,8 +260,7 @@ def try_fix_with_gmaps():
   pd.set_option('display.max_rows', None)  
   pd.set_option('display.max_colwidth', None)  
   pd.set_option('display.max_columns', None)  
-  gmaps = googlemaps.Client(key=params.gmapskey)
-  df = open_pickle('data/Collisions.csv')
+  df = open_collisions()
 
   # create dataframe indexed by incident tatetime
   df2 = df.set_index('INCDTTM')
