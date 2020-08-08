@@ -22,34 +22,25 @@ sdotcolnum   all values from april 2013 onward are missing except for month sept
 seglanekey   all values from 2004 to 2006 are 0
 crosswalkkey all values from 2004 to 2006 are 0
 """
-pd.set_option('display.max_colwidth', None)
-pd.set_option('display.max_columns', None)
-pd.set_option('display.width', None)
-pd.set_option('display.max_rows', 200)
-pd.set_option('display.min_rows', 200)
+
+
+def set_4k_display_settings():
+  pd.set_option('display.max_colwidth', None)
+  pd.set_option('display.max_columns', None)
+  pd.set_option('display.width', None)
+  pd.set_option('display.max_rows', 100)
+  pd.set_option('display.min_rows', 100)
 
 
 num_cols = ['personcount', 'pedcount', 'pedcylcount', 'vehcount', 'injuries', 'seriousinjuries', 'fatalities']
 cat_cols = ['status', 'addrtype', 'exceptrsncode', 'severitycode', 'collisiontype', 'junctiontype', 'sdot_colcode', 'inattentionind', 'underinfl', 'weather', 'roadcond', 'lightcond',  'pedrownotgrnt', 'speeding', 'st_colcode', 'hitparkedcar', 'reporttype']
 
-#@cache
+
+@cache
 def cleaned_collisions():
   # remove na
   odf = open_collisions()
   odf.columns = map(str.lower, odf.columns)
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -59,7 +50,7 @@ def cleaned_collisions():
   """
   df = odf.copy()
 
-  #df['location'] = df['location'].astype('str')
+  
   
   df.drop('objectid', inplace=True, axis = 1)
 
@@ -110,20 +101,14 @@ def cleaned_collisions():
   df['sdot_colcode'] = df['sdot_colcode'].astype('category')
 
 
-  df['severitycode'].value_counts(dropna=False)
-
 
   df.drop('sdot_coldesc', inplace=True, axis = 1)
-
-  df['severitycode'].value_counts(dropna=False)
 
 
   loc = ~df['inattentionind'].isna()
   df.loc[loc, 'inattentionind'] = 1
   df['inattentionind'].fillna(value=0, inplace=True)
   df['inattentionind'] = df['inattentionind'].astype(np.bool)
-
-  df['severitycode'].value_counts(dropna=False)
 
 
   """
@@ -139,7 +124,6 @@ def cleaned_collisions():
   df['underinfl'] = df['underinfl'].astype(np.bool)
 
 
-  df['severitycode'].value_counts(dropna=False)
 
   #df['weather'].fillna(value='N/A', inplace=True)
   #df = df[~df['weather'].isna()]
@@ -153,16 +137,10 @@ def cleaned_collisions():
   df['lightcond'] = df['lightcond'].astype('category')
 
 
-  df['severitycode'].value_counts(dropna=False)
-
-
   loc = ~df['pedrownotgrnt'].isna()
   df.loc[loc, 'pedrownotgrnt'] = 1
   df['pedrownotgrnt'].fillna(value=0, inplace=True)
   df['pedrownotgrnt'] = df['pedrownotgrnt'].astype(np.bool)
-
-
-  df['severitycode'].value_counts(dropna=False)
 
 
   """
@@ -173,8 +151,6 @@ def cleaned_collisions():
   """
   df.drop('sdotcolnum', inplace=True, axis = 1)
 
-
-  df['severitycode'].value_counts(dropna=False)
 
 
   loc = ~df['speeding'].isna()
@@ -190,22 +166,21 @@ def cleaned_collisions():
 
   df.drop('st_coldesc', inplace=True, axis = 1)
 
-  df['severitycode'].value_counts(dropna=False)
   """
   If we knew more about the lane key like northbound/southbound, etc., it would be more useful.
   At least record whether the key is present.
   """
-  loc = df['seglanekey'] == '0'
-  df.loc[loc, 'seglanekey'] = 0
-  df.loc[~loc, 'seglanekey'] = 1
+  loc = df['seglanekey'] > 0
+  df.loc[~loc, 'seglanekey'] = 0
+  df.loc[loc, 'seglanekey'] = 1
   df['seglanekey'] = df['seglanekey'].astype(np.bool)
 
   """
   Knowing if a crosswalk was involved is interesting.
   """
-  loc = df['crosswalkkey'] == '0'
-  df.loc[loc, 'crosswalkkey'] = 0
-  df.loc[~loc, 'crosswalkkey'] = 1
+  loc = df['crosswalkkey'] > 0
+  df.loc[~loc, 'crosswalkkey'] = 0
+  df.loc[loc, 'crosswalkkey'] = 1
   df['crosswalkkey'] = df['crosswalkkey'].astype(np.bool)
 
   loc = df['hitparkedcar'] == 'N'
@@ -213,7 +188,20 @@ def cleaned_collisions():
   df.loc[~loc, 'hitparkedcar'] = 1
   df['hitparkedcar'] = df['hitparkedcar'].astype(np.bool)
 
-  #df.info()
+  """Cleaning Section Done"""
+
+  """
+  Now add some useful feature columns
+  """
+  
+  
+  df['colltype3'] = df['collisiontype'].apply(lambda x: 'Ped' if x == 'Pedestrian' else 'Cyc' if x == 'Cycles' else 'Veh')
+  df['colltype3'] = df['colltype3'].astype('category')
+
+  b = [0,4,8,12,16,20,24]
+  l = ['Late Night', 'Early Morning','Morning','Noon','Eve','Night']
+  df['timeofday'] = pd.cut(df['incdttm'].dt.hour, bins=b, labels=l, include_lowest=True)
+  df['timeofday'] = df['timeofday'].astype('category')
 
   return df
 
@@ -335,27 +323,25 @@ def build_intersection_speed_map(s):
 @cache
 def collision_street_intersection_joined():
   s = read_streets()
-  s.columns = ['s_'+c for c in s.columns]
-  
+  s.columns = ['s_'+c for c in s.columns]  
   ismap = build_intersection_speed_map(s)  
-  
   i = read_intersections()
   i.columns = ['i_'+c for c in i.columns]
   c = cleaned_collisions()
+  #c.loc[:, 'location'] = c['location'].str.strip()
+  #s.loc[:, 's_unitdesc'] = s['s_unitdesc'].str.strip()
+  #i.loc[:, 'i_unitdesc'] = i['i_unitdesc'].str.strip()
   cs = c.join(s.set_index('s_unitdesc'), on='location', how='left')
   csi = cs.join(i.set_index('i_unitdesc'), on='location', how='left')
-  
   # set speed limit hi and lo variables for intersection or block
   csi['speedlimitlo'] = np.nan
   csi['speedlimithi'] = np.nan
   l = csi['addrtype']=='Intersection'
   csi.loc[l, 'speedlimitlo'] = csi[l]['location'].apply(lambda x: min(ismap[x]) if x in ismap else np.nan)
   csi.loc[l, 'speedlimithi'] = csi[l]['location'].apply(lambda x: max(ismap[x]) if x in ismap else np.nan)
-  
   l = csi['addrtype']=='Block'
   csi.loc[l, 'speedlimitlo'] = csi[l]['s_speedlimit']
   csi.loc[l, 'speedlimithi'] = csi[l]['s_speedlimit']
-
   return csi
   
 """
@@ -379,3 +365,4 @@ f = pd.read_csv('./data/Traffic_Flow_Map_Volumes.csv')
 h0, h1 = np.histogram(f[f['YEAR']==2017]['AAWDT']); h0 = h0/h0.sum()
 h0, h1 = np.histogram(f[f['YEAR']==2018]['AAWDT']); h0 = h0/h0.sum()
 """
+
